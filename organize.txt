@@ -1,0 +1,11 @@
+export type EventData = {
+    id: number;
+    title: string;
+    time: string;
+    color: "red" | "blue" | "sky" | "lime";
+    height: string;
+};
+export type WeekColumn = {
+    day: string;
+    events: EventData[];
+};
