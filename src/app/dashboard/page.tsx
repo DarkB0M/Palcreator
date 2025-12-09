@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import MiniCalendar from "@/components/layout/MiniCalendar";
@@ -23,7 +24,7 @@ const DashboardPage = () => {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    
+
     const isLoggedIn = () => {
         return auth.currentUser !== null;
     }
@@ -57,7 +58,7 @@ const DashboardPage = () => {
 
     const fetchCalendar = async () => {
         if (!auth.currentUser?.uid) return;
-        
+
         try {
             setIsLoadingCalendar(true);
             const response = await fetch("/api/getCalendar", {
@@ -69,13 +70,11 @@ const DashboardPage = () => {
             });
 
             const data = await response.json();
-            
+
             if (response.ok && data.calendar && Array.isArray(data.calendar)) {
                 const processedData = processCalendarData(data.calendar);
                 setAllCalendarData(processedData);
-                console.log("Calendar data loaded:", processedData);
             } else {
-                console.log("No calendar data found, using default");
                 setAllCalendarData([]);
             }
         } catch (error) {
@@ -95,83 +94,41 @@ const DashboardPage = () => {
     });
     const [allCalendarData, setAllCalendarData] = useState<WeekColumn[]>([]);
 
-    // Processar dados do banco: converter formato de data e garantir estrutura correta
+    // Processar dados do banco: aceitar formato ISO diretamente
     const processCalendarData = (rawData: any[]): WeekColumn[] => {
         if (!Array.isArray(rawData)) return [];
-        
-        return rawData.map((item, index) => {
-            let dayStr = item.day || "";
-            let events = item.events || [];
-            let originalDateStr = "";
-            
-            // Se day está no formato ISO (2025-11-24), manter a data original e converter para formato legível
-            if (dayStr.includes("-")) {
-                originalDateStr = dayStr;
-                const date = new Date(dayStr);
-                const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-                const dayName = weekDays[date.getDay()];
-                const dayNumber = date.getDate();
-                dayStr = `${dayName} ${dayNumber}`;
-            } else {
-                // Se já está no formato legível, tentar extrair a data
-                originalDateStr = dayStr;
-            }
-            
-            return {
-                day: dayStr,
-                events: events,
-                originalDate: originalDateStr, // Manter data original para busca
-                index: index // Manter índice original
-            } as WeekColumn & { originalDate?: string; index?: number };
-        });
+        return rawData;
     };
 
     // Obter dados da semana atual (7 dias a partir de weekStart)
     const getCurrentWeekData = (): WeekColumn[] => {
         const weekData: WeekColumn[] = [];
         const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        
+
         for (let i = 0; i < 7; i++) {
             const date = new Date(weekStart);
             date.setDate(weekStart.getDate() + i);
-            
+
+            // Formato da data para comparação: YYYY-MM-DD
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
+            // Nome do dia para exibição
             const dayName = weekDays[date.getDay()];
             const dayNumber = date.getDate();
-            const dayStr = `${dayName} ${dayNumber}`;
-            
-            // Buscar dados correspondentes a esta data
-            const dateStr = date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-            
-            // Buscar nos dados processados
-            const matchingData = allCalendarData.find(item => {
-                const itemWithExtras = item as WeekColumn & { originalDate?: string };
-                const itemDay = item.day;
-                const originalDate = itemWithExtras.originalDate;
-                
-                // Se tem data original no formato ISO, comparar
-                if (originalDate && originalDate.includes("-")) {
-                    return originalDate === dateStr;
-                }
-                
-                // Se o item tem formato "Dom 24", verificar se corresponde
-                if (itemDay === dayStr) {
-                    return true;
-                }
-                
-                // Se ainda tem formato ISO, verificar
-                if (itemDay.includes("-") && itemDay.startsWith(dateStr)) {
-                    return true;
-                }
-                
-                return false;
-            });
-            
+            const displayDay = `${dayName} ${dayNumber}`;
+
+            // Buscar eventos para esta data
+            const matchingData = allCalendarData.find(item => item.day === dateStr);
+
             weekData.push({
-                day: dayStr,
+                day: displayDay,
                 events: matchingData?.events || []
             });
         }
-        
+
         return weekData;
     };
 
@@ -246,51 +203,14 @@ const DashboardPage = () => {
 
     const handleGenerateScript = (event: EventData) => {
         console.log("Gerar roteiro para:", event);
-        // Cria um novo chat automaticamente com a primeira mensagem sendo o título do evento
-        (async () => {
-            try {
-                const uid = auth.currentUser?.uid;
-                if (!uid) {
-                    console.warn('handleGenerateScript: usuário não autenticado');
-                    router.push('/login');
-                    return;
-                }
-
-                // Criar o chat sem enviar a mensagem — iremos apenas preencher o input na tela de makeScript
-                const newChat = {
-                    id: '',
-                    title: event.title,
-                    timestamp: new Date().toISOString(),
-                    messages: []
-                };
-
-                const response = await fetch('/api/newChat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ uid, chat: newChat })
-                });
-
-                const data = await response.json();
-                console.log('handleGenerateScript: newChat response', { status: response.status, data });
-                if (response.ok && data.chatId) {
-                    // Navega para a tela de criação com o chat recém-criado e preenche o input para edição
-                    const prefill = encodeURIComponent(event.title);
-                    router.push(`/makeScript?chatId=${data.chatId}&prefill=${prefill}`);
-                } else {
-                    console.error('handleGenerateScript: falha ao criar chat', data);
-                }
-            } catch (error) {
-                console.error('handleGenerateScript error', error);
-            }
-        })();
+        // Navegar para a página makeScript com o título preenchido
+        router.push(`/makeScript?prefill=${encodeURIComponent(event.title)}`);
     };
-    
+
     // Atualizar dados da semana quando weekStart ou allCalendarData mudarem
     useEffect(() => {
-        if (allCalendarData.length > 0 || weekStart) {
-            const weekData = getCurrentWeekData();
-            setCalendarData(weekData);
-        }
+        const weekData = getCurrentWeekData();
+        setCalendarData(weekData);
     }, [weekStart, allCalendarData]);
 
     useEffect(() => {
@@ -298,42 +218,115 @@ const DashboardPage = () => {
         fetchCalendar();
     }, []);
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1,
+                delayChildren: 0.1,
+            },
+        },
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: {
+                duration: 0.5,
+                ease: [0.4, 0, 0.2, 1],
+            },
+        },
+    };
+
+    const sidebarVariants = {
+        hidden: { opacity: 0, x: -20 },
+        visible: {
+            opacity: 1,
+            x: 0,
+            transition: {
+                duration: 0.6,
+                ease: [0.4, 0, 0.2, 1],
+            },
+        },
+    };
+
     return (
-        <div className="flex h-screen bg-[#0F0F0F] text-white overflow-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <motion.div
+            className="flex h-screen bg-[#0F0F0F] text-white overflow-hidden"
+            style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+        >
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-            <Sidebar />
+            <motion.div variants={sidebarVariants}>
+                <Sidebar />
+            </motion.div>
             <div className="flex-1 flex flex-col">
-                <Header
-                    currentDate={currentDate}
-                    onNext={viewMode === 'week' ? handleNextWeek : handleNextMonth}
-                    onPrev={viewMode === 'week' ? handlePrevWeek : handlePrevMonth}
-                    onToday={handleToday}
-                    viewMode={viewMode}
-                    onViewChange={handleViewChange}
-                />
+                <motion.div variants={itemVariants}>
+                    <Header
+                        currentDate={currentDate}
+                        onNext={viewMode === 'week' ? handleNextWeek : handleNextMonth}
+                        onPrev={viewMode === 'week' ? handlePrevWeek : handlePrevMonth}
+                        onToday={handleToday}
+                        viewMode={viewMode}
+                        onViewChange={handleViewChange}
+                    />
+                </motion.div>
                 <div className="flex flex-1 overflow-hidden">
-                    <div className="w-80 p-6 flex flex-col gap-6 border-r border-[#2A2A2A] overflow-y-auto bg-[#1A1A1A]">
-                        <button className="w-full py-3 px-4 bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] text-white font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}>
-                            <Rocket size={18} /> Agendar Publicação
-                        </button>
-                        <MiniCalendar
-                            currentDate={currentDate}
-                            onPrev={handlePrevMonth}
-                            onNext={handleNextMonth}
-                            selectedDate={selectedDate}
-                            onDateSelect={handleDateSelect}
-                        />
-                        <Filters />
-                    </div>
-                    <div className="flex-1">
-                        {isLoadingCalendar ? (
-                            <div className="flex items-center justify-center h-full bg-[#0F0F0F]">
-                                <div className="text-[#888888]">Carregando calendário...</div>
-                            </div>
-                        ) : (
-                            <WeekView data={calendarData} onEventClick={handleEventClick} />
-                        )}
-                    </div>
+                    <motion.div
+                        className="w-80 p-6 flex flex-col gap-6 border-r border-[#2A2A2A] overflow-y-auto bg-[#1A1A1A]"
+                        variants={itemVariants}
+                    >
+                       
+                        <motion.div variants={itemVariants}>
+                            <MiniCalendar
+                                currentDate={currentDate}
+                                onPrev={handlePrevMonth}
+                                onNext={handleNextMonth}
+                                selectedDate={selectedDate}
+                                onDateSelect={handleDateSelect}
+                            />
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
+                            
+                        </motion.div>
+                    </motion.div>
+                    <motion.div className="flex-1" variants={itemVariants}>
+                        <AnimatePresence mode="wait">
+                            {isLoadingCalendar ? (
+                                <motion.div
+                                    key="loading"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="flex items-center justify-center h-full bg-[#0F0F0F]"
+                                >
+                                    <motion.div
+                                        className="text-[#888888]"
+                                        animate={{ opacity: [0.5, 1, 0.5] }}
+                                        transition={{ duration: 1.5, repeat: Infinity }}
+                                    >
+                                        Carregando calendário...
+                                    </motion.div>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="calendar"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    transition={{ duration: 0.4 }}
+                                    className="h-full"
+                                >
+                                    <WeekView data={calendarData} onEventClick={handleEventClick} />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
                 </div>
             </div>
 
@@ -344,7 +337,7 @@ const DashboardPage = () => {
                 onClose={handleCloseModal}
                 onGenerateScript={handleGenerateScript}
             />
-        </div>
+        </motion.div>
     );
 };
 

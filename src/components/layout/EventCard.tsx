@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "framer-motion";
+
 export type EventData = {
     id: number;
     title: string;
@@ -43,10 +47,19 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
     const minHeight = titleLength > 60 ? "min-h-[120px]" : titleLength > 40 ? "min-h-[100px]" : "min-h-[80px]";
 
     return (
-        <div
+        <motion.div
             onClick={() => onClick?.(event)}
-            className={`w-full rounded-lg p-3 relative overflow-hidden group cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${style.bg} ${style.text} ${style.shadow} ${minHeight} flex flex-col justify-between`}
+            className={`w-full rounded-lg p-3 relative overflow-hidden group cursor-pointer ${style.bg} ${style.text} ${style.shadow} ${minHeight} flex flex-col justify-between`}
             style={{ fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '12px' }}
+            whileHover={{ 
+                scale: 1.03, 
+                y: -2,
+                transition: { duration: 0.2 }
+            }}
+            whileTap={{ scale: 0.98 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         >
             <h3 className="font-semibold text-sm mb-1 leading-tight flex-1" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}>
                 {event.title}
@@ -54,7 +67,7 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
             <p className="text-xs opacity-90 font-medium mt-auto" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500 }}>
                 {event.time}
             </p>
-        </div>
+        </motion.div>
     );
 };
 

@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type HeaderProps = {
     currentDate: Date;
@@ -43,58 +44,52 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrev, onNext, onToday, v
 
             <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2 bg-[#2A2A2A] p-1 rounded-lg border border-[#3A3A3A]">
-                    <button 
-                        onClick={onPrev} 
+                    <motion.button
+                        onClick={onPrev}
                         className="p-2 hover:bg-[#3A3A3A] rounded-lg text-[#888888] hover:text-white transition-colors"
                         aria-label="Mês anterior"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                     >
                         <ChevronLeft size={16} />
-                    </button>
-                    <button 
-                        onClick={onNext} 
+                    </motion.button>
+                    <motion.button
+                        onClick={onNext}
                         className="p-2 hover:bg-[#3A3A3A] rounded-lg text-[#888888] hover:text-white transition-colors"
                         aria-label="Próximo mês"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                     >
                         <ChevronRight size={16} />
-                    </button>
+                    </motion.button>
                 </div>
 
-                <span className="text-white font-semibold text-lg min-w-[200px] text-center capitalize" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}>
-                    {formattedDate}
-                </span>
+                <AnimatePresence mode="wait">
+                    <motion.span
+                        key={formattedDate}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        className="text-white font-semibold text-lg min-w-[200px] text-center capitalize"
+                        style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}
+                    >
+                        {formattedDate}
+                    </motion.span>
+                </AnimatePresence>
 
-                <button 
-                    onClick={onToday} 
+                <motion.button
+                    onClick={onToday}
                     className="px-4 py-2 bg-[#2A2A2A] border border-[#3A3A3A] text-white rounded-lg hover:bg-[#3A3A3A] transition-colors text-sm font-medium"
                     style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                 >
                     Hoje
-                </button>
+                </motion.button>
             </div>
 
-            <div className="bg-[#2A2A2A] p-1 rounded-lg border border-[#3A3A3A] flex text-xs font-medium" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                <button 
-                    onClick={() => handleViewChange('day')}
-                    className={`px-4 py-2 rounded-lg transition-all ${selectedView === 'day' ? 'bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] text-white shadow-lg' : 'text-[#888888] hover:text-white'}`}
-                    style={{ fontWeight: 500 }}
-                >
-                    Dia
-                </button>
-                <button 
-                    onClick={() => handleViewChange('week')}
-                    className={`px-4 py-2 rounded-lg transition-all ${selectedView === 'week' ? 'bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] text-white shadow-lg' : 'text-[#888888] hover:text-white'}`}
-                    style={{ fontWeight: 500 }}
-                >
-                    Semana
-                </button>
-                <button 
-                    onClick={() => handleViewChange('month')}
-                    className={`px-4 py-2 rounded-lg transition-all ${selectedView === 'month' ? 'bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] text-white shadow-lg' : 'text-[#888888] hover:text-white'}`}
-                    style={{ fontWeight: 500 }}
-                >
-                    Mês
-                </button>
-            </div>
+            <div />
         </div>
     );
 };

@@ -69,7 +69,7 @@ export default function MakeScriptPage() {
     const fetchChatHistory = async (uid: string) => {
         console.log("Fetching chat history for UID:", uid);
         setChatHistory([]); // Limpar o histórico ao iniciar o carregamento
-        
+
         try {
             setIsLoadingHistory(true);
             const response = await fetch("/api/getChats", {
@@ -77,9 +77,9 @@ export default function MakeScriptPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ uid })
             });
-            
+
             const data = await response.json();
-            
+
             if (response.ok && data.chats) {
                 // Mapeia para a interface ChatHistory, garantindo que timestamp seja Date se possível
                 const formattedChats: ChatHistory[] = data.chats
@@ -101,7 +101,7 @@ export default function MakeScriptPage() {
 
                 setChatHistory(formattedChats);
             } else {
-                 setChatHistory([]); // Garante que o estado seja limpo em caso de erro da API
+                setChatHistory([]); // Garante que o estado seja limpo em caso de erro da API
             }
         } catch (error) {
             console.error("Error fetching chat history:", error);
@@ -176,15 +176,15 @@ export default function MakeScriptPage() {
 
         let currentTitle = "";
         let newMessages: Message[] = [];
-        
-           // Se for o primeiro envio de um chat novo, vamos usar a mensagem do usuário como primeira mensagem
-           // (assim o título da conversa será a primeira mensagem)
-           if (!currentChatId && messages.length === 1 && messages[0].id === initialMessage.id) {
-               newMessages = [userMessage];
-           } else {
-               // Caso contrário, continua a sequência normal
-               newMessages = [...messages, userMessage];
-           }
+
+        // Se for o primeiro envio de um chat novo, vamos usar a mensagem do usuário como primeira mensagem
+        // (assim o título da conversa será a primeira mensagem)
+        if (!currentChatId && messages.length === 1 && messages[0].id === initialMessage.id) {
+            newMessages = [userMessage];
+        } else {
+            // Caso contrário, continua a sequência normal
+            newMessages = [...messages, userMessage];
+        }
 
         setMessages(newMessages);
         setInputValue("");
@@ -214,7 +214,7 @@ export default function MakeScriptPage() {
                 if (response.ok && data.chatId) {
                     chatId = data.chatId;
                     setCurrentChatId(chatId);
-                    
+
                     if (chatId) {
                         const updatedChat: ChatHistory = { ...newChat, id: chatId };
                         // Adiciona o novo chat no topo do histórico
@@ -230,8 +230,8 @@ export default function MakeScriptPage() {
             currentTitle = existingChat ? existingChat.title : userContent.substring(0, 30) + (userContent.length > 30 ? "..." : "");
 
             // Atualiza o histórico local com a mensagem do usuário (para otimismo na UI)
-            setChatHistory(prev => prev.map(chat => 
-                chat.id === chatId 
+            setChatHistory(prev => prev.map(chat =>
+                chat.id === chatId
                     ? { ...chat, messages: newMessages }
                     : chat
             ));
@@ -264,7 +264,7 @@ export default function MakeScriptPage() {
             setMessages(initialWithAssistant);
 
             // Função que simula digitação caractere a caractere
-            const typeWriter = async (fullText: string, speed = 15) => {
+            const typeWriter = async (fullText: string, speed = 270) => {
                 for (let i = 0; i < fullText.length; i++) {
                     const next = fullText.slice(0, i + 1);
                     setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: next } : m));
@@ -367,12 +367,26 @@ export default function MakeScriptPage() {
         }
     }, [searchParams, user]);
 
+    // Efeito separado para preencher o input quando não há chatId
+    useEffect(() => {
+        const chatId = searchParams?.get?.('chatId');
+        const prefill = searchParams?.get?.('prefill');
+
+        // Apenas preencher se não houver chatId e houver prefill
+        if (!chatId && prefill && user) {
+            console.log('Prefilling input with:', prefill);
+            setInputValue(prefill);
+            // Focar no input para melhor UX
+            setTimeout(() => inputRef.current?.focus(), 100);
+        }
+    }, [searchParams, user]);
+
     // Iniciar um novo chat
     const handleNewChat = async () => {
         // Usa o estado 'user' para verificação de login
         const uid = user?.uid;
         if (!uid) return;
-        
+
         try {
             const newChat: ChatHistory = {
                 id: "",
@@ -407,7 +421,7 @@ export default function MakeScriptPage() {
         // Usa o estado 'user' para verificação de login
         const uid = user?.uid;
         if (!uid) return;
-        
+
         try {
             const response = await fetch("/api/getChat", {
                 method: "POST",
@@ -426,7 +440,7 @@ export default function MakeScriptPage() {
                 setMessages(formattedMessages);
                 setCurrentChatId(chat.id);
             } else {
-                 // Fallback: usar dados locais (já formatados para Date no fetchChatHistory)
+                // Fallback: usar dados locais (já formatados para Date no fetchChatHistory)
                 setMessages(chat.messages.map(msg => ({
                     ...msg,
                     timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
@@ -435,7 +449,7 @@ export default function MakeScriptPage() {
             }
         } catch (error) {
             console.error("Error loading chat:", error);
-             // Fallback: usar dados locais
+            // Fallback: usar dados locais
             setMessages(chat.messages.map(msg => ({
                 ...msg,
                 timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
@@ -524,11 +538,11 @@ export default function MakeScriptPage() {
             `}</style>
             <div className="flex h-screen bg-[#0F0F0F] text-white overflow-hidden" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-            
+
                 {/* Sidebar */}
                 {/* Nota: Se o Sidebar precisar de estado global ou de usuário, considere passá-los como props. */}
                 <Sidebar />
-            
+
                 <div className="flex flex-1 flex-col">
                     {/* Header */}
                     <div className="flex items-center px-6 py-4 border-b border-[#2A2A2A] bg-[#1A1A1A]">
@@ -579,11 +593,10 @@ export default function MakeScriptPage() {
                                             <button
                                                 key={chat.id}
                                                 onClick={() => handleLoadChat(chat)}
-                                                className={`w-full text-left p-3 rounded-lg transition-colors ${
-                                                    currentChatId === chat.id
+                                                className={`w-full text-left p-3 rounded-lg transition-colors ${currentChatId === chat.id
                                                         ? "bg-[#2A2A2A] border border-[#5B9FFF]"
                                                         : "bg-[#2A2A2A] hover:bg-[#3A3A3A]"
-                                                }`}
+                                                    }`}
                                                 disabled={isLoading}
                                             >
                                                 <p className="text-sm text-white font-medium mb-1 truncate" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 500 }}>
@@ -612,28 +625,27 @@ export default function MakeScriptPage() {
                                                 <Bot size={16} className="text-white" />
                                             </div>
                                         )}
-                                        
+
                                         <div className={`max-w-[80%] ${message.role === "user" ? "order-2" : ""}`}>
-                                            <div className={`rounded-lg p-4 ${
-                                                message.role === "assistant" 
-                                                    ? "bg-[#2A2A2A] text-white" 
+                                            <div className={`rounded-lg p-4 ${message.role === "assistant"
+                                                    ? "bg-[#2A2A2A] text-white"
                                                     : "bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] text-white"
-                                            }`}>
+                                                }`}>
                                                 {message.role === "assistant" ? (
-                                                    <div 
-                                                        className="text-sm leading-relaxed markdown-content" 
+                                                    <div
+                                                        className="text-sm leading-relaxed markdown-content"
                                                         style={{ fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.6 }}
                                                     >
                                                         <ReactMarkdown
                                                             components={{
                                                                 // Removendo as definições de classes que já estão no CSS global para simplicidade, 
                                                                 // mas mantendo a customização de componentes.
-                                                                h1: ({node, ...props}) => <h1 {...props} />,
-                                                                h2: ({node, ...props}) => <h2 {...props} />,
-                                                                h3: ({node, ...props}) => <h3 {...props} />,
-                                                                strong: ({node, ...props}) => <strong {...props} />,
-                                                                em: ({node, ...props}) => <em {...props} />,
-                                                                code: ({node, className, ...props}: any) => {
+                                                                h1: ({ node, ...props }) => <h1 {...props} />,
+                                                                h2: ({ node, ...props }) => <h2 {...props} />,
+                                                                h3: ({ node, ...props }) => <h3 {...props} />,
+                                                                strong: ({ node, ...props }) => <strong {...props} />,
+                                                                em: ({ node, ...props }) => <em {...props} />,
+                                                                code: ({ node, className, ...props }: any) => {
                                                                     const isInline = !className;
                                                                     return isInline ? (
                                                                         <code {...props} />
@@ -641,12 +653,12 @@ export default function MakeScriptPage() {
                                                                         <code className="block" {...props} />
                                                                     );
                                                                 },
-                                                                pre: ({node, ...props}) => <pre {...props} />,
-                                                                ul: ({node, ...props}) => <ul {...props} />,
-                                                                ol: ({node, ...props}) => <ol className="list-decimal ml-6 my-2" {...props} />, // Adicionado ol
-                                                                li: ({node, ...props}) => <li {...props} />,
-                                                                a: ({node, ...props}) => <a {...props} />,
-                                                                p: ({node, ...props}) => <p {...props} />
+                                                                pre: ({ node, ...props }) => <pre {...props} />,
+                                                                ul: ({ node, ...props }) => <ul {...props} />,
+                                                                ol: ({ node, ...props }) => <ol className="list-decimal ml-6 my-2" {...props} />, // Adicionado ol
+                                                                li: ({ node, ...props }) => <li {...props} />,
+                                                                a: ({ node, ...props }) => <a {...props} />,
+                                                                p: ({ node, ...props }) => <p {...props} />
                                                             }}
                                                         >
                                                             {message.content}
@@ -658,7 +670,7 @@ export default function MakeScriptPage() {
                                                     </p>
                                                 )}
                                             </div>
-                                            
+
                                             {message.role === "assistant" && (
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <button

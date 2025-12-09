@@ -38,8 +38,9 @@ export async function POST(request: NextRequest) {
         Você é um gerador de calendário altamente estruturado.
         SIGA AS PREFERENCIAS ABAIXO PARA CRIAR UM CALENDÁRIO DETALHADO PARA UM USUÁRIO.
         Preferências do usuário: ${preferencesString}
-        Sua tarefa é criar um calendário de pelo menos **duas semanas completas**, usando SOMENTE o formato informado no schema (WeekColumn → EventData[]).
         
+        Sua tarefa é criar um calendário de pelo menos **duas semanas completas**, usando SOMENTE o formato informado no schema (WeekColumn → EventData[]).
+        SIGA o DIA De HOJE:${new Date().toLocaleDateString()}
         Tipos:
         - EventData: { id: number; title: string; time: string; color: "red" | "blue" | "sky" | "lime"; height: string }
         - WeekColumn: { day: string; events: EventData[] }
