@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrev, onNext, onToday, v
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                        transition={{ duration: 0.3 }}
                         className="text-white font-semibold text-lg min-w-[200px] text-center capitalize"
                         style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}
                     >

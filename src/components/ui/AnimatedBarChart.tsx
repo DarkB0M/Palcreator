@@ -25,7 +25,6 @@ export default function AnimatedBarChart({ data, maxValue }: AnimatedBarChartPro
                                 transition={{
                                     duration: 1,
                                     delay: index * 0.1,
-                                    ease: [0.4, 0, 0.2, 1],
                                 }}
                             >
                                 <motion.div

@@ -59,7 +59,7 @@ const EventCard = ({ event, onClick }: EventCardProps) => {
             whileTap={{ scale: 0.98 }}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.3 }}
         >
             <h3 className="font-semibold text-sm mb-1 leading-tight flex-1" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 600 }}>
                 {event.title}

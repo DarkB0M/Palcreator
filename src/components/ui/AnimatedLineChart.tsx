@@ -41,7 +41,7 @@ export default function AnimatedLineChart({ data, color, label }: AnimatedLineCh
                     fill={`url(#gradient-${label})`}
                     initial={{ pathLength: 0, opacity: 0 }}
                     animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+                    transition={{ duration: 1.5 }}
                 />
                 {/* Linha */}
                 <motion.path
@@ -53,7 +53,7 @@ export default function AnimatedLineChart({ data, color, label }: AnimatedLineCh
                     strokeLinejoin="round"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
-                    transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
+                    transition={{ duration: 1.5 }}
                 />
                 {/* Pontos */}
                 {data.map((item, index) => {

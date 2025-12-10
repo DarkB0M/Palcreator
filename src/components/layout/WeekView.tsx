@@ -27,7 +27,6 @@ const WeekView = ({ data, onEventClick }: WeekViewProps) => {
             transition: {
                 delay: i * 0.05,
                 duration: 0.4,
-                ease: [0.4, 0, 0.2, 1],
             },
         }),
     };
@@ -86,7 +85,6 @@ const WeekView = ({ data, onEventClick }: WeekViewProps) => {
                                             transition={{
                                                 delay: eventIndex * 0.1,
                                                 duration: 0.3,
-                                                ease: [0.4, 0, 0.2, 1],
                                             }}
                                         >
                                             <EventCard event={event} onClick={onEventClick} />
