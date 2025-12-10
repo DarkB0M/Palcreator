@@ -23,12 +23,17 @@ import {
     BarChart3,
     Rocket,
     Settings,
-    Bot
+    Bot,
+    Loader2
 } from "lucide-react";
 import { FaTiktok, FaYoutube } from "react-icons/fa";
 import Link from "next/link";
 import EventCard, { EventData } from "@/components/layout/EventCard";
-
+import { usePremium } from "@/hooks/usePremium";
+import { redirectToCheckout } from "@/lib/premium";
+import LoadingModal from "@/components/ui/LoadingModal";
+import logo from "@/public/logo.png";
+import Image from "next/image";
 interface QuickStats {
     totalViews: number;
     totalFollowers: number;
@@ -47,6 +52,8 @@ const HomePage = () => {
     const [upcomingEvents, setUpcomingEvents] = useState<EventData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [platforms, setPlatforms] = useState<Array<{ name: string; icon: React.ReactNode; color: string; followers: number }>>([]);
+    const { isPremium, loading: premiumLoading } = usePremium();
+    const [isPreparingCheckout, setIsPreparingCheckout] = useState(false);
 
     const isLoggedIn = () => {
         return auth.currentUser !== null;
@@ -389,7 +396,7 @@ const HomePage = () => {
         }
     ];
 
-    if (isLoading) {
+    if (isLoading || premiumLoading) {
         return (
             <div className="flex h-screen w-screen bg-[#0F0F0F] items-center justify-center">
                 <motion.div
@@ -400,6 +407,120 @@ const HomePage = () => {
                 >
                     Carregando...
                 </motion.div>
+            </div>
+        );
+    }
+
+    // Se não for premium, mostrar mensagem e opção para assinar
+    if (isPremium) {
+        return (
+            <div className="flex h-screen w-screen bg-[#0F0F0F] font-sans antialiased" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+                
+                <Sidebar />
+
+                <div className="flex-1 flex items-center justify-center px-8">
+                    <motion.div
+                        className="max-w-2xl w-full bg-[#1A1A1A] border border-[#2A2A2A] rounded-lg p-12"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <div className="text-center mb-8">
+                            <motion.div
+                                className="inline-block mb-6"
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ delay: 0.2, type: "spring" }}
+                            >
+                                <div
+                                    className="p-6 rounded-full"
+                                    style={{ backgroundColor: "black"}}
+                                >
+                                    <Image src={logo} alt="Pal Creator Logo" width={64} height={64} />
+                                </div>
+                            </motion.div>
+                            
+                            <h1 className="text-4xl font-bold text-white mb-4" style={{ fontWeight: 800 }}>
+                                Acesso Premium Necessário
+                            </h1>
+                            
+                            <p className="text-[#888888] text-lg mb-8" style={{ lineHeight: 1.6 }}>
+                                A página Home está disponível apenas para assinantes Premium.
+                                Assine agora para ter acesso completo a todas as funcionalidades.
+                            </p>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="bg-[#2A2A2A] rounded-lg p-6 space-y-4">
+                                <h3 className="text-xl font-bold text-white mb-4">O que você ganha com Premium:</h3>
+                                
+                                <div className="space-y-3">
+                                    {[
+                                        "Acesso completo à página Home",
+                                        "Calendário de conteúdo ilimitado",
+                                        "Geração de scripts com IA avançada",
+                                        "Estatísticas detalhadas das redes sociais",
+                                        "Suporte prioritário",
+                                        "Novos recursos exclusivos"
+                                    ].map((benefit, index) => (
+                                        <motion.div
+                                            key={index}
+                                            className="flex items-center gap-3"
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.3 + index * 0.1 }}
+                                        >
+                                            <div className="w-2 h-2 rounded-full bg-[#D4FF4D]" />
+                                            <span className="text-white">{benefit}</span>
+                                        </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <motion.button
+                                onClick={async () => {
+                                    setIsPreparingCheckout(true);
+                                    await redirectToCheckout();
+                                }}
+                                disabled={isPreparingCheckout}
+                                className="w-full px-8 py-4 rounded-lg text-white font-semibold flex items-center justify-center gap-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{
+                                    background: "linear-gradient(90deg, #4DD4F7, #8B6FFF)",
+                                    borderRadius: "8px"
+                                }}
+                                whileHover={{ scale: isPreparingCheckout ? 1 : 1.02 }}
+                                whileTap={{ scale: isPreparingCheckout ? 1 : 0.98 }}
+                            >
+                                {isPreparingCheckout ? (
+                                    <>
+                                        <Loader2 size={24} className="animate-spin" />
+                                        Preparando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles size={24} />
+                                        Assinar Premium por R$ 29,90/mês
+                                    </>
+                                )}
+                            </motion.button>
+                            
+                            <LoadingModal
+                                isOpen={isPreparingCheckout}
+                                message="Estamos preparando o link seguro para você"
+                            />
+
+                            <Link href="/dashboard">
+                                <button
+                                    className="w-full px-8 py-4 rounded-lg text-[#888888] font-semibold border border-[#4A4A4A] hover:border-[#888888] transition-colors"
+                                    style={{ borderRadius: "8px" }}
+                                >
+                                    Voltar ao Dashboard
+                                </button>
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
             </div>
         );
     }

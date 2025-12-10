@@ -7,7 +7,8 @@ import Sidebar from "@/components/layout/Sidebar"; // Assumindo que este é um C
 import { auth } from "@/lib/firebase";
 import { User } from "firebase/auth"; // Importar o tipo User do firebase/auth
 import { useSearchParams } from 'next/navigation';
-
+import logo from "@/public/logo.png";
+import Image from "next/image";
 // Definindo as interfaces com o timestamp de forma mais flexível para evitar problemas de tipagem com APIs
 interface Message {
     id: string;
@@ -621,8 +622,8 @@ export default function MakeScriptPage() {
                                         className={`flex gap-4 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                                     >
                                         {message.role === "assistant" && (
-                                            <div className="w-8 h-8 bg-gradient-to-r from-[#8B6FFF] to-[#4DD4F7] rounded-lg flex items-center justify-center shrink-0">
-                                                <Bot size={16} className="text-white" />
+                                            <div className="w-18 h-18  rounded-lg flex items-center justify-center shrink-0">
+                                                <Image src={logo} alt="Pal Creator Logo" width={40} height={40} />
                                             </div>
                                         )}
 

@@ -204,7 +204,7 @@ export async function POST(request: NextRequest) {
                         } else {
                             console.warn('TikTok JSON script tag not found');
                         }
-                    } else {
+        } else {
                         console.warn('TikTok API response not OK:', tiktokApiResponse.status);
                     }
                 } catch (tiktokApiError) {

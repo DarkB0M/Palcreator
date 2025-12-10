@@ -15,6 +15,7 @@ import type { EventData } from "@/components/layout/EventCard";
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import EventModal from "@/components/ui/EventModal";
+import LoadingModal from "@/components/ui/LoadingModal";
 
 const DashboardPage = () => {
     const router = useRouter();
@@ -24,6 +25,8 @@ const DashboardPage = () => {
     const [selectedDate, setSelectedDate] = useState<Date>(new Date());
     const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isRegeneratingCalendar, setIsRegeneratingCalendar] = useState(false);
+    const [calendarExpires, setCalendarExpires] = useState<string | null>(null);
 
     const isLoggedIn = () => {
         return auth.currentUser !== null;
@@ -56,6 +59,94 @@ const DashboardPage = () => {
         }
     }
 
+    const checkAndRegenerateCalendar = async () => {
+        if (!auth.currentUser?.uid) return;
+
+        try {
+            setIsLoadingCalendar(true);
+            // Buscar dados do calendário incluindo data de expiração
+            const response = await fetch("/api/getCalendar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    uid: auth.currentUser.uid
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setCalendarExpires(data.calendarExpires || null);
+
+                // Verificar se o calendário expirou hoje
+                if (data.calendarExpires) {
+                    const expiresDate = new Date(data.calendarExpires);
+                    const today = new Date();
+                    
+                    // Comparar apenas a data (sem horas)
+                    expiresDate.setHours(0, 0, 0, 0);
+                    today.setHours(0, 0, 0, 0);
+
+                    if (expiresDate.getTime() === today.getTime()) {
+                        // Calendário expirou hoje, regenerar
+                        console.log('Calendar expired today, regenerating...');
+                        await regenerateCalendar();
+                        return;
+                    }
+                }
+
+                // Se não expirou, carregar calendário normalmente
+                if (data.calendar && Array.isArray(data.calendar)) {
+                    const processedData = processCalendarData(data.calendar);
+                    setAllCalendarData(processedData);
+                } else {
+                    setAllCalendarData([]);
+                }
+            } else {
+                setAllCalendarData([]);
+            }
+        } catch (error) {
+            console.error("Error checking calendar:", error);
+            setAllCalendarData([]);
+        } finally {
+            setIsLoadingCalendar(false);
+        }
+    };
+
+    const regenerateCalendar = async () => {
+        if (!auth.currentUser?.uid) return;
+
+        setIsRegeneratingCalendar(true);
+
+        try {
+            const response = await fetch("/api/excludeCalendar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    uid: auth.currentUser.uid
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Aguardar um pouco para garantir que o calendário foi salvo
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Buscar o novo calendário
+                await fetchCalendar();
+            } else {
+                console.error("Error regenerating calendar:", data.error);
+                alert("Erro ao regenerar calendário. Tente novamente.");
+            }
+        } catch (error) {
+            console.error("Error regenerating calendar:", error);
+            alert("Erro ao regenerar calendário. Tente novamente.");
+        } finally {
+            setIsRegeneratingCalendar(false);
+        }
+    };
+
     const fetchCalendar = async () => {
         if (!auth.currentUser?.uid) return;
 
@@ -74,6 +165,7 @@ const DashboardPage = () => {
             if (response.ok && data.calendar && Array.isArray(data.calendar)) {
                 const processedData = processCalendarData(data.calendar);
                 setAllCalendarData(processedData);
+                setCalendarExpires(data.calendarExpires || null);
             } else {
                 setAllCalendarData([]);
             }
@@ -215,7 +307,7 @@ const DashboardPage = () => {
 
     useEffect(() => {
         useFirstLogin();
-        fetchCalendar();
+        checkAndRegenerateCalendar();
     }, []);
 
     const containerVariants = {
@@ -336,6 +428,12 @@ const DashboardPage = () => {
                 event={selectedEvent}
                 onClose={handleCloseModal}
                 onGenerateScript={handleGenerateScript}
+            />
+
+            {/* Modal de Regeneração de Calendário */}
+            <LoadingModal
+                isOpen={isRegeneratingCalendar}
+                message="Estamos fazendo um novo calendário para você"
             />
         </motion.div>
     );

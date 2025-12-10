@@ -3,7 +3,8 @@
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import logo from "@/public/logo.png";
+import Image from "next/image";
 type HeaderProps = {
     currentDate: Date;
     onPrev: () => void;
@@ -30,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrev, onNext, onToday, v
         <div className="h-20 flex items-center justify-between px-8 border-b border-[#2A2A2A] bg-[#1A1A1A]" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
             <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gradient-to-r from-[#4DD4F7] to-[#8B6FFF] rounded-lg flex items-center justify-center text-white shadow-lg">
-                    <CalendarDays size={20} />
+                    <Image src={logo} alt="Pal Creator Logo" width={24} height={24} />
                 </div>
                 <div>
                     <h1 className="text-white font-bold text-lg" style={{ fontFamily: 'Inter, system-ui, sans-serif', fontWeight: 700 }}>
