@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
             stripeSubscriptionId: session.subscription as string,
             isPremium: true,
             plan: 'monthly',
-            currentPeriodEnd: subscription.current_period_end * 1000,
-            currentPeriodStart: subscription.current_period_start * 1000,
+            currentPeriodEnd: ((subscription as any).current_period_end ?? 0) * 1000,
+            currentPeriodStart: ((subscription as any).current_period_start ?? 0) * 1000,
           });
         }
         break;
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object as any;
         const customerId = subscription.customer as string;
 
         // Buscar UID pelo customer ID
@@ -95,15 +95,15 @@ export async function POST(request: NextRequest) {
           await update(ref(database, `users/${uid}/subscription`), {
             status: subscription.status,
             isPremium: isActive,
-            currentPeriodEnd: subscription.current_period_end * 1000,
-            currentPeriodStart: subscription.current_period_start * 1000,
+            currentPeriodEnd: (subscription.current_period_end ?? 0) * 1000,
+            currentPeriodStart: (subscription.current_period_start ?? 0) * 1000,
           });
         }
         break;
       }
 
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object as any;
         const subscriptionId = invoice.subscription as string;
         
         if (subscriptionId) {
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
             await update(ref(database, `users/${uid}/subscription`), {
               status: 'active',
               isPremium: true,
-              currentPeriodEnd: subscription.current_period_end * 1000,
-              currentPeriodStart: subscription.current_period_start * 1000,
+              currentPeriodEnd: ((subscription as any).current_period_end ?? 0) * 1000,
+              currentPeriodStart: ((subscription as any).current_period_start ?? 0) * 1000,
             });
           }
         }
@@ -125,12 +125,12 @@ export async function POST(request: NextRequest) {
       }
 
       case 'invoice.payment_failed': {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object as any;
         const subscriptionId = invoice.subscription as string;
         
         if (subscriptionId) {
           const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-          const customerId = subscription.customer as string;
+          const customerId = (subscription as any).customer as string;
           const customer = await stripe.customers.retrieve(customerId);
           const uid = (customer as Stripe.Customer).metadata?.uid;
 

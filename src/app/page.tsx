@@ -73,7 +73,6 @@ const LandingPage = () => {
             y: 0,
             transition: {
                 duration: 0.6,
-                ease: "easeOut",
             },
         },
     };
@@ -209,7 +208,6 @@ const LandingPage = () => {
                         transition={{
                             duration: 10,
                             repeat: Infinity,
-                            ease: "easeInOut",
                         }}
         />
                     <motion.div
@@ -223,7 +221,6 @@ const LandingPage = () => {
                         transition={{
                             duration: 12,
                             repeat: Infinity,
-                            ease: "easeInOut",
                         }}
                     />
                 </div>
@@ -382,7 +379,7 @@ const LandingPage = () => {
                                         transition={{ duration: 0.4, delay: index * 0.1 }}
                                     >
                                         <div
-                                            className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                                            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
                                             style={{ background: "linear-gradient(90deg, #4DD4F7, #8B6FFF)" }}
                                         >
                                             <CheckCircle size={16} className="text-white" />

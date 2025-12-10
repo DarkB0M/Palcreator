@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { Copy, ThumbsUp, ThumbsDown, Send, Bot, Sparkles, History, Plus } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Sidebar from "@/components/layout/Sidebar"; // Assumindo que este é um Client Component
@@ -320,8 +320,7 @@ export default function MakeScriptPage() {
     };
 
     // Carregar chat a partir do query param ?chatId=... quando o usuário estiver autenticado
-    const searchParams = useSearchParams();
-    const loadChatById = async (chatId: string) => {
+    const loadChatById = async (chatId: string, searchParams: URLSearchParams | null) => {
         const uid = user?.uid;
         if (!uid) return;
 
@@ -361,26 +360,33 @@ export default function MakeScriptPage() {
         }
     };
 
-    useEffect(() => {
-        const chatId = searchParams?.get?.('chatId');
-        if (chatId && user) {
-            loadChatById(chatId);
-        }
-    }, [searchParams, user]);
+    // Componente interno que usa useSearchParams
+    const SearchParamsHandler = () => {
+        const searchParams = useSearchParams();
+        
+        useEffect(() => {
+            const chatId = searchParams?.get?.('chatId');
+            if (chatId && user) {
+                loadChatById(chatId, searchParams);
+            }
+        }, [searchParams, user]);
 
-    // Efeito separado para preencher o input quando não há chatId
-    useEffect(() => {
-        const chatId = searchParams?.get?.('chatId');
-        const prefill = searchParams?.get?.('prefill');
+        // Efeito separado para preencher o input quando não há chatId
+        useEffect(() => {
+            const chatId = searchParams?.get?.('chatId');
+            const prefill = searchParams?.get?.('prefill');
 
-        // Apenas preencher se não houver chatId e houver prefill
-        if (!chatId && prefill && user) {
-            console.log('Prefilling input with:', prefill);
-            setInputValue(prefill);
-            // Focar no input para melhor UX
-            setTimeout(() => inputRef.current?.focus(), 100);
-        }
-    }, [searchParams, user]);
+            // Apenas preencher se não houver chatId e houver prefill
+            if (!chatId && prefill && user) {
+                console.log('Prefilling input with:', prefill);
+                setInputValue(prefill);
+                // Focar no input para melhor UX
+                setTimeout(() => inputRef.current?.focus(), 100);
+            }
+        }, [searchParams, user]);
+        
+        return null;
+    };
 
     // Iniciar um novo chat
     const handleNewChat = async () => {
@@ -473,6 +479,9 @@ export default function MakeScriptPage() {
 
     return (
         <>
+            <Suspense fallback={null}>
+                <SearchParamsHandler />
+            </Suspense>
             {/* O estilo global CSS para ReactMarkdown foi mantido, mas com as tags ajustadas para JSX */}
             <style jsx global>{`
                 .markdown-content h1, .markdown-content h2, .markdown-content h3 {

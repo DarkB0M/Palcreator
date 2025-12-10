@@ -15,7 +15,8 @@ import {
     CheckCircle,
     RefreshCw,
     Crown,
-    Sparkles
+    Sparkles,
+    Loader2
 } from "lucide-react";
 import { usePremium } from "@/hooks/usePremium";
 import { cancelSubscription, redirectToCheckout } from "@/lib/premium";

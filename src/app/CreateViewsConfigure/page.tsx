@@ -215,7 +215,7 @@ export default function CreateViewsConfigure() {
                 </motion.div>
             </motion.div>
 
-            {isLoading && <LoadingModal />}
+            <LoadingModal isOpen={isLoading} />
         </div>
     );
 }
